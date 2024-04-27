@@ -4,4 +4,37 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="87dp"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="No More Harassment" />
+
+    <EditText
+        android:id="@+id/phrase"
+        android:layout_width="match_parent"
+        android:layout_height="108dp"
+        android:ems="10"
+        android:hint="Enter Phrase Here"
+        android:inputType="text" />
+
+    <Button
+        android:id="@+id/addphrase"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Phrase" />
+
+    <Button
+        android:id="@+id/deletePhrases"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
 </LinearLayout>

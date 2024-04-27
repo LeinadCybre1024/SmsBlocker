@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
 import android.os.IBinder
 import android.provider.Telephony
 import android.util.Log
@@ -12,6 +13,26 @@ import android.widget.Toast
 
 class MessageDeletionService : Service() {
 
+    private val handler = Handler()
+    private lateinit var phrasesToDelete: Array<String>
+    private lateinit var dbHelper: DBHelper
+
+
+    private val deleteMessagesRunnable = object : Runnable {
+        override fun run() {
+            val phrasesToDelete = dbHelper.getAllPhrases().toTypedArray()
+            if (!phrasesToDelete.isNullOrEmpty()) {
+                deleteMessagesWithPhrases(applicationContext, phrasesToDelete)
+            }
+            // Schedule the next execution after 2 minutes (120,000 milliseconds)
+            handler.postDelayed(this, 120000)
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        dbHelper = DBHelper(this) // Initialize dbHelper here
+    }
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
@@ -19,17 +40,22 @@ class MessageDeletionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         Toast.makeText(this, "Started 1", Toast.LENGTH_SHORT).show()
-        val phrasesToDelete = intent?.getStringArrayExtra("phrases")
+        val phrasesToDelete = dbHelper.getAllPhrases().toTypedArray()
 
         if (!phrasesToDelete.isNullOrEmpty()) {
             deleteMessagesWithPhrases(this, phrasesToDelete) // Pass the context as the first argument
             Toast.makeText(this, "Messages deleted successfully", Toast.LENGTH_SHORT).show()
-        }
 
+        }
+        handler.post(deleteMessagesRunnable)
         return START_NOT_STICKY
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacks(deleteMessagesRunnable) // Remove the runnable callback when the service is destroyed
+        Toast.makeText(this, "Service stopped", Toast.LENGTH_SHORT).show()
+    }
 
 
     fun deleteMessagesWithPhrases(context: Context, phrasesToDelete: Array<String>) {

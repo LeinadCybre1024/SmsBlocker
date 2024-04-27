@@ -12,7 +12,9 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.SEND_SMS"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <application>
+    <application
+        android:label="Sms Blocker "
+        android:icon="@drawable/ic_blocker_logo">
         <service android:name=".MessageDeletionService"/>
         <activity
             android:name=".MainActivity"
