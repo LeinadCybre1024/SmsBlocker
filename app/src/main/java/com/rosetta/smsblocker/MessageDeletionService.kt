@@ -39,12 +39,12 @@ class MessageDeletionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        Toast.makeText(this, "Started 1", Toast.LENGTH_SHORT).show()
+       // Toast.makeText(this, "Started 1", Toast.LENGTH_SHORT).show()
         val phrasesToDelete = dbHelper.getAllPhrases().toTypedArray()
 
         if (!phrasesToDelete.isNullOrEmpty()) {
             deleteMessagesWithPhrases(this, phrasesToDelete) // Pass the context as the first argument
-            Toast.makeText(this, "Messages deleted successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Messages deletion successfully", Toast.LENGTH_SHORT).show()
 
         }
         handler.post(deleteMessagesRunnable)

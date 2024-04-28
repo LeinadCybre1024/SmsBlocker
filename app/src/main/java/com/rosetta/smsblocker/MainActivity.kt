@@ -2,16 +2,23 @@ package com.rosetta.smsblocker
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.BlockedNumberContract
+import android.provider.CallLog
 import android.provider.Telephony
+import android.telephony.TelephonyManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -30,6 +37,11 @@ class MainActivity : AppCompatActivity() {
     companion object {
         // The requested role.
         const val role = RoleManager.ROLE_SMS
+
+        private const val REQUEST_CODE = 123
+        private fun showToast(mainActivity: MainActivity, message: String) {
+            Toast.makeText(mainActivity, message, Toast.LENGTH_SHORT).show()
+        }
     }
 
 
@@ -110,6 +122,8 @@ class MainActivity : AppCompatActivity() {
                 // Perform additional actions after adding the phrase
 
                 loadPhrases()
+
+                removeSpamCalls()
             }
 
         }
@@ -120,6 +134,10 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         loadPhrases()
+
+        if (checkPermissions(this)) {
+            removeSpamCalls()
+        }
 
         // Use the phrases from the database for SMS deletion
 
@@ -164,11 +182,78 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun removeSpamCalls() {
+        // Check if the app has the necessary permissions
+        if (checkPermissions(this)) {
+            // Get the call log entries
+            val callLogUri = CallLog.Calls.CONTENT_URI
+            val projection = arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.DATE)
+            val cursor = contentResolver.query(callLogUri, projection, null, null, null)
+
+            // Define the array of phone number prefixes to check
+            val prefixesToCheck = arrayOf("020", "0730", "0709")
+
+            // Loop through the call log entries
+            cursor?.use { c ->
+                while (c.moveToNext()) {
+                    val phoneNumber = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
+                    //showToast("Call : $phoneNumber")
+
+                    // Check if the phone number starts with any of the prefixes
+                    if (prefixesToCheck.any { phoneNumber.startsWith(it) }) {
+                        // Delete the call log entry
+                        val selection = "${CallLog.Calls.NUMBER} = ?"
+                        val selectionArgs = arrayOf(phoneNumber)
+                        val deletedRows = contentResolver.delete(callLogUri, selection, selectionArgs)
+
+                        if (deletedRows > 0) {
+                            showToast("Call record deleted: $phoneNumber")
+                        } else {
+                            showToast("Error deleting call record: $phoneNumber")
+                        }
+                    }
+                }
+            }
+        } else {
+            // Request the necessary permissions
+            requestPermissions(this)
+        }
+    }
+    private fun isNumberBlocked(phoneNumber: String): Boolean {
+        return try {
+            val uri = BlockedNumberContract.BlockedNumbers.CONTENT_URI
+            val projection = arrayOf(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER)
+            val selection = "${BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER} = ?"
+            val selectionArgs = arrayOf(phoneNumber)
+            val cursor = contentResolver.query(uri, projection, selection, selectionArgs, null)
+
+            val isBlocked = cursor?.use {
+                it.count > 0
+            } ?: false
+
+            if (isBlocked) {
+                showToast("Number $phoneNumber is blocked")
+            }
+
+            isBlocked
+        } catch (e: Exception) {
+            false
+        }
+    }
+    private fun checkPermissions(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(context, "android.permission.READ_CALL_LOG") == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(context, "android.permission.WRITE_CALL_LOG") == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestPermissions(activity: Activity) {
+        val permissions = arrayOf("android.permission.READ_CALL_LOG", "android.permission.WRITE_CALL_LOG")
+        ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+    }
     private fun deleteSms()
     {
         // Retrieve phrases from the database
         val phrases = dbHelper.getAllPhrases().toTypedArray()
-        Toast.makeText(this, "Started Deleteing", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Started Deleteing Service", Toast.LENGTH_SHORT).show()
         // Start the MessageDeletionService service
         val serviceIntent = Intent(this, MessageDeletionService::class.java)
         serviceIntent.putExtra("phrases", phrases)
@@ -179,11 +264,11 @@ class MainActivity : AppCompatActivity() {
         intentLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (it.resultCode == Activity.RESULT_OK) {
-                    showToast("Success requesting ROLE_SMS!")
+                    showToast("Success requesting , Enjoy !!!")
 
                     // Example phrases to delete
                     deleteSms()
-
+                    loadPhrases()
                 } else {
                     showToast("Failed requesting ROLE_SMS")
                 }
