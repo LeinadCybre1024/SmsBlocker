@@ -5,20 +5,20 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/textView2"
         android:layout_width="match_parent"
         android:layout_height="87dp"
         android:gravity="center_horizontal|center_vertical"
         android:text="No More Harassment" />
 
     <Button
-        android:id="@+id/callLogClear"
+        android:id="@+id/smsClear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Call Log Clear" />
+        android:text="SMS Clear" />
 
     <EditText
-        android:id="@+id/phrase"
+        android:id="@+id/phrase2"
         android:layout_width="match_parent"
         android:layout_height="108dp"
         android:ems="10"
@@ -26,19 +26,19 @@
         android:inputType="text" />
 
     <Button
-        android:id="@+id/addphrase"
+        android:id="@+id/addphrase2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Add Phrase" />
 
     <Button
-        android:id="@+id/deletePhrases"
+        android:id="@+id/deletePhrases2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Delete" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recyclerView2"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

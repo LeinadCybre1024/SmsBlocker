@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.BlockedNumberContract
 import android.provider.CallLog
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.Telephony
 import android.telephony.TelephonyManager
 import android.widget.Button
@@ -28,8 +29,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intentLauncher: ActivityResultLauncher<Intent>
     private var hasPermision = false;
     private lateinit var dbHelper: DBHelper
+    private lateinit var dbHelper2: DBHelper2
     private lateinit var phrase :EditText
     private lateinit var addPhrase:Button
+    private lateinit var callLogClear:Button
     private lateinit var deletePhrases:Button
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PhraseAdapter
@@ -75,10 +78,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
         dbHelper = DBHelper(this)
+        dbHelper2 = DBHelper2(this)
 
         phrase = findViewById(R.id.phrase)
         addPhrase = findViewById(R.id.addphrase)
+        callLogClear = findViewById(R.id.callLogClear)
         deletePhrases = findViewById(R.id.deletePhrases)
+
+        callLogClear.setOnClickListener{
+            val intent = Intent(this, PhoneAcivity::class.java)
+            startActivity(intent)
+        }
 
         addPhrase.setOnClickListener {
             val phraseText = phrase.text.toString().trim()
@@ -123,7 +133,7 @@ class MainActivity : AppCompatActivity() {
 
                 loadPhrases()
 
-                removeSpamCalls()
+
             }
 
         }
@@ -135,9 +145,7 @@ class MainActivity : AppCompatActivity() {
 
         loadPhrases()
 
-        if (checkPermissions(this)) {
-            removeSpamCalls()
-        }
+
 
         // Use the phrases from the database for SMS deletion
 
@@ -182,73 +190,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun removeSpamCalls() {
-        // Check if the app has the necessary permissions
-        if (checkPermissions(this)) {
-            // Get the call log entries
-            val callLogUri = CallLog.Calls.CONTENT_URI
-            val projection = arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.DATE)
-            val cursor = contentResolver.query(callLogUri, projection, null, null, null)
 
-            // Define the array of phone number prefixes to check
-            val prefixesToCheck = arrayOf("020", "0730", "0709")
-
-            // Loop through the call log entries
-            cursor?.use { c ->
-                while (c.moveToNext()) {
-                    val phoneNumber = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
-                    //showToast("Call : $phoneNumber")
-
-                    // Check if the phone number starts with any of the prefixes
-                    if (prefixesToCheck.any { phoneNumber.startsWith(it) }) {
-                        // Delete the call log entry
-                        val selection = "${CallLog.Calls.NUMBER} = ?"
-                        val selectionArgs = arrayOf(phoneNumber)
-                        val deletedRows = contentResolver.delete(callLogUri, selection, selectionArgs)
-
-                        if (deletedRows > 0) {
-                            showToast("Call record deleted: $phoneNumber")
-                        } else {
-                            showToast("Error deleting call record: $phoneNumber")
-                        }
-                    }
-                }
-            }
-        } else {
-            // Request the necessary permissions
-            requestPermissions(this)
-        }
-    }
-    private fun isNumberBlocked(phoneNumber: String): Boolean {
-        return try {
-            val uri = BlockedNumberContract.BlockedNumbers.CONTENT_URI
-            val projection = arrayOf(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER)
-            val selection = "${BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER} = ?"
-            val selectionArgs = arrayOf(phoneNumber)
-            val cursor = contentResolver.query(uri, projection, selection, selectionArgs, null)
-
-            val isBlocked = cursor?.use {
-                it.count > 0
-            } ?: false
-
-            if (isBlocked) {
-                showToast("Number $phoneNumber is blocked")
-            }
-
-            isBlocked
-        } catch (e: Exception) {
-            false
-        }
-    }
-    private fun checkPermissions(context: Context): Boolean {
-        return ContextCompat.checkSelfPermission(context, "android.permission.READ_CALL_LOG") == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(context, "android.permission.WRITE_CALL_LOG") == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestPermissions(activity: Activity) {
-        val permissions = arrayOf("android.permission.READ_CALL_LOG", "android.permission.WRITE_CALL_LOG")
-        ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
-    }
     private fun deleteSms()
     {
         // Retrieve phrases from the database

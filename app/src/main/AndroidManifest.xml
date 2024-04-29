@@ -18,7 +18,12 @@
     <application
         android:label="Sms Blocker "
         android:icon="@drawable/ic_blocker_logo">
-        <service android:name=".MessageDeletionService"/>
+        <service android:name=".MessageDeletionService"
+            android:enabled="true"
+            android:exported="true"/>
+        <service android:name=".CallLogDeleteionService"
+            android:enabled="true"
+            android:exported="true"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,7 +35,10 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         </activity>
-
+        <activity android:name=".PhoneAcivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat"
+/>
         <activity
             android:name=".SMSActivity"
             android:exported="false" >
